@@ -752,7 +752,7 @@ EIIC SSH Project Team</textarea>
 
     function adminUnlock() {
       if (isUnlocked()) { showAdminTabs(); setStatus('🔓 Admin tabs visible', '#ffffff'); return; }
-      const entered = prompt('Enter admin password:');
+      const entered = prompt('Enter admin code');
       if (entered === null) return;
       if (entered.trim() === getAdminPassword()) {
         setUnlocked(true);
