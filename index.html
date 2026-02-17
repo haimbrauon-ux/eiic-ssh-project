@@ -1143,6 +1143,56 @@ EIIC SSH Project Team</textarea>
                 'EUR': parseFloat(document.getElementById('eurToUsdRate')?.value) || 0.92
             };
         }
+// ─────────────────────────────────────────────
+// 🔒 Simple Tab Protection (client-side)
+// Protect: Data, Bank (tasks), Budget
+// ─────────────────────────────────────────────
+const PROTECTED_TABS = new Set(['data', 'tasks', 'budget']);
+
+function getSystemPassword() {
+  // Password is stored in Data tab input (and saved to Firebase config)
+  const el = document.getElementById('systemPassword');
+  return (el?.value || '').trim();
+}
+
+function isUnlocked() {
+  return sessionStorage.getItem('eiic_unlocked') === '1';
+}
+
+function setUnlocked(val) {
+  sessionStorage.setItem('eiic_unlocked', val ? '1' : '0');
+}
+
+function requestUnlock() {
+  const pw = getSystemPassword();
+  if (!pw) {
+    alert("No password is set. Go to the Data tab (admin) and set a password first.");
+    return false;
+  }
+
+  const entered = prompt("Enter password to access this tab:");
+  if (entered === null) return false; // user cancelled
+
+  if (entered.trim() === pw) {
+    setUnlocked(true);
+    alert("Unlocked for this session ✅");
+    return true;
+  }
+
+  alert("Wrong password ❌");
+  return false;
+}
+
+// Optional: show lock state somewhere (you already have syncStatus element)
+function updateLockStatus() {
+  const s = document.getElementById('syncStatus');
+  if (!s) return;
+  if (getSystemPassword() && !isUnlocked()) {
+    // Don't overwrite sync messages too aggressively; keep it subtle.
+    // You can comment this out if you prefer.
+    // s.textContent = (s.textContent || '') + ' 🔒';
+  }
+}
 
         // Tab switching
         function switchTab(tabName, event) {
