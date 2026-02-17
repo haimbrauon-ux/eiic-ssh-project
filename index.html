@@ -1,0 +1,2759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EIIC SSH Project Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+            white-space: nowrap;
+            flex-shrink: 0;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .tab.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .card h3 {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .card .value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .card .label {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .budget-input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .budget-input-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2d3748;
+        }
+
+        .budget-input-section input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .quarterly-prediction {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quarter-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            text-align: center;
+        }
+
+        .quarter-card h4 {
+            font-size: 0.9em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .quarter-card .prediction {
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .quarter-card .prediction.overspending {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .quarter-card .prediction.underspending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .quarter-card .prediction.on-budget {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .quarter-card .prediction.future {
+            background: #e7f3ff;
+            color: #004085;
+        }
+
+        h2 {
+            color: #2d3748;
+            margin: 20px 0 15px 0;
+            font-size: 1.2em;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.85em;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75em;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        tr.overdue {
+            background: #ffe6e6 !important;
+        }
+
+        tr.done {
+            background: #d4edda !important;
+        }
+
+        tr.menu-done {
+            background: #e8f5e9 !important;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .status.done { background: #d4edda; color: #155724; }
+        .status.ongoing { background: #fff3cd; color: #856404; }
+        .status.assigned { background: #d1ecf1; color: #0c5460; }
+        .status.not-assigned { background: #f8d7da; color: #721c24; }
+        .status.delayed { background: #f8d7da; color: #721c24; }
+        .status.planned { background: #e2e3e5; color: #383d41; }
+        .status.ordered { background: #d1ecf1; color: #0c5460; }
+        .status.pending { background: #fff3cd; color: #856404; }
+        .status.received { background: #d4edda; color: #155724; }
+        .status.po-sent { background: #d1ecf1; color: #0c5460; }
+        .status.complete { background: #d4edda; color: #155724; }
+
+        .flag {
+            padding: 3px 6px;
+            border-radius: 8px;
+            font-size: 0.7em;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .flag.delayed { background: #dc3545; color: white; }
+        .flag.done { background: #28a745; color: white; }
+        .flag.overdue { background: #dc3545; color: white; }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-edit {
+            background: #28a745;
+        }
+
+        .btn-flag {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-row select, .filter-row input {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .editable-cell:hover {
+            background: #f0f0f0;
+        }
+
+        .editable-cell input {
+            width: 100%;
+            padding: 5px;
+            border: 2px solid #667eea;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        .validation-error {
+            color: #dc3545;
+            font-size: 0.85em;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 5px;
+        }
+
+        .validation-success {
+            color: #155724;
+            font-size: 0.85em;
+            margin-top: 10px;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 5px;
+        }
+    </style>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 EIIC SSH Project Manager</h1>
+            <p>2026 Action Items & Budget Tracker</p>
+            <div id="syncStatus" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('menu', event)">Menu Tasks</button>
+            <button class="tab" onclick="switchTab('orders', event)">PO Tracker</button>
+            <button class="tab" onclick="switchTab('flights', event)">Flights</button>
+            <button class="tab" onclick="switchTab('tasks', event)">Bank</button>
+            <button class="tab" onclick="switchTab('budget', event)">Budget</button>
+            <button class="tab" onclick="switchTab('data', event)">Data</button>
+        </div>
+
+        <!-- Menu Tasks Tab -->
+        <div id="menu" class="tab-content active">
+            <h2>📋 Priority Menu Tasks (Assigned Only)</h2>
+            
+            <div class="filter-group">
+                <div class="filter-row">
+                    <select id="menuOwnerFilter" onchange="filterMenuTasks()">
+                        <option value="">All Owners</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Project Name</th>
+                            <th>Task</th>
+                            <th>Owner</th>
+                            <th>Due Date</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Status Update</th>
+                            <th>Notes</th>
+                            <th>Deliverable Links</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menuTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- All Tasks Tab -->
+        <div id="tasks" class="tab-content">
+            <div class="card">
+                <h3>Total Tasks in Bank</h3>
+                <div class="value" id="taskCount">0</div>
+                <div class="label">Action Items</div>
+            </div>
+
+            <button onclick="openTaskModal()">➕ Add New Task</button>
+
+            <input type="text" class="search-box" id="taskSearch" placeholder="Search tasks..." onkeyup="filterTasks()">
+
+            <div class="filter-group">
+                <div class="filter-row">
+                    <select id="taskOwnerFilter" onchange="filterTasks()">
+                        <option value="">All Owners</option>
+                    </select>
+                    <select id="taskStatusFilter" onchange="filterTasks()">
+                        <option value="">All Status</option>
+                        <option value="Done">Done</option>
+                        <option value="Assigned">Assigned</option>
+                        <option value="Not Assigned">Not Assigned</option>
+                        <option value="Delayed">Delayed</option>
+                    </select>
+                </div>
+            </div>
+
+            <h2>Task Bank</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Project Name</th>
+                            <th>Owner</th>
+                            <th>Due Date</th>
+                            <th>Task</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Menu Status</th>
+                            <th>Notes</th>
+                            <th>Deliverable Links</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PO Tracker Tab -->
+        <div id="orders" class="tab-content">
+            <button onclick="openOrderModal()">➕ Add New Order</button>
+
+            <h2>Purchase Orders</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Sub Project</th>
+                            <th>Vendor</th>
+                            <th>Cost</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Flights Tab -->
+        <div id="flights" class="tab-content">
+            <button onclick="openFlightModal()">➕ Add New Flight</button>
+
+            <h2>Flight Schedule</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Dates</th>
+                            <th>Destination</th>
+                            <th>Travelers</th>
+                            <th>Cost (USD)</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="flightsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Budget Tab -->
+        <div id="budget" class="tab-content">
+            <!-- Budget Input Section -->
+            <div class="budget-input-section">
+                <label for="totalBudgetInput">Total Annual Budget (USD)</label>
+                <input type="number" id="totalBudgetInput" value="60000" onchange="updateBudgetSummary()">
+                
+                <label for="flightBudgetAllocation">Flight Budget Allocation (USD)</label>
+                <input type="number" id="flightBudgetAllocation" value="20000" onchange="updateBudgetSummary()">
+                
+                <div id="budgetValidation"></div>
+            </div>
+
+            <!-- Budget Summary Cards -->
+            <div class="card">
+                <h3>Operational Budget</h3>
+                <div class="value" id="operationalBudget">$40,000</div>
+                <div class="label">Total Budget - Flight Allocation</div>
+            </div>
+
+            <!-- Quarterly Predictions -->
+            <h2>📊 Quarterly Spending Predictions</h2>
+            <div class="quarterly-prediction" id="quarterlyPredictions"></div>
+
+            <h2>💰 Budget Summary</h2>
+            <div class="table-wrapper">
+                <table style="min-width: 400px;">
+                    <tr>
+                        <td><strong>Operational Budget:</strong></td>
+                        <td id="operationalBudget2">$40,000</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Spent from POs:</strong></td>
+                        <td id="spentFromPOs">$0</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Spent from Flights:</strong></td>
+                        <td id="spentFromFlights">$0</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Subtotal Spent:</strong></td>
+                        <td id="subtotalSpent">$0</td>
+                    </tr>
+                    <tr style="background: #f8f9fa; font-weight: bold;">
+                        <td><strong>Total Remaining:</strong></td>
+                        <td id="totalRemaining">$60,000</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Operational Remaining:</strong></td>
+                        <td id="operationalRemaining">$40,000</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Flight Remaining:</strong></td>
+                        <td id="flightRemaining">$20,000</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Budget Detail Table (Moved to Bottom) -->
+            <h2>📑 Detailed Budget Breakdown</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Sub Project Name</th>
+                            <th>Q1 AOP</th>
+                            <th>Q1 ACT</th>
+                            <th>Q2 AOP</th>
+                            <th>Q2 ACT</th>
+                            <th>Q3 AOP</th>
+                            <th>Q3 ACT</th>
+                            <th>Q4 AOP</th>
+                            <th>Q4 ACT</th>
+                            <th>Total AOP</th>
+                            <th>Total ACT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="budgetTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Data Tab -->
+        <div id="data" class="tab-content">
+            <h2>⚙️ System Configuration</h2>
+
+            <!-- Password Protection Section -->
+            <div class="budget-input-section">
+                <h3>🔒 Password Protection</h3>
+                <div class="form-group">
+                    <label>Set Password (leave empty for no password)</label>
+                    <input type="password" id="systemPassword" placeholder="Enter password">
+                    <small>This password will protect Data, Bank, and Budget tabs</small>
+                </div>
+            </div>
+
+            <!-- Exchange Rates Section -->
+            <div class="budget-input-section">
+                <h3>💱 Exchange Rates</h3>
+                <div class="form-group">
+                    <label>ILS to USD Conversion Rate</label>
+                    <input type="number" step="0.01" id="ilsToUsdRate" value="3.25">
+                    <small>1 USD = X ILS</small>
+                </div>
+                <div class="form-group">
+                    <label>EUR to USD Conversion Rate</label>
+                    <input type="number" step="0.01" id="eurToUsdRate" value="0.92">
+                    <small>1 USD = X EUR</small>
+                </div>
+            </div>
+
+            <!-- Email Template Section -->
+            <div class="budget-input-section">
+                <h3>📧 Email Template for Task Assignments</h3>
+                <div class="form-group">
+                    <label>Email Subject</label>
+                    <input type="text" id="emailSubject" value="Your Assigned Tasks - EIIC SSH Project">
+                </div>
+                <div class="form-group">
+                    <label>Email Message Template</label>
+                    <textarea id="emailTemplate" rows="8" style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 5px;">Hi {name},
+
+Here are your currently assigned tasks for the EIIC SSH Project:
+
+{tasks}
+
+Please review and update your progress accordingly.
+
+Best regards,
+EIIC SSH Project Team</textarea>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
+                    <button onclick="sendAllEmails()" class="btn-edit">📧 Send All Emails</button>
+                    <select id="emailRecipientSelect" style="flex: 1; padding: 10px; border: 2px solid #e9ecef; border-radius: 5px;">
+                        <option value="">Select team member...</option>
+                    </select>
+                    <button onclick="sendEmailByOwner()" class="btn-secondary">📧 Send to One Person</button>
+                </div>
+            </div>
+
+            <!-- Team Members Section -->
+            <h2>👥 Team Members</h2>
+            <button onclick="openTeamMemberModal()">➕ Add Team Member</button>
+            
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamMembersTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Sub Project Names Section -->
+            <h2>📦 Project Names (for Tasks)</h2>
+            <button onclick="openProjectModal()">➕ Add Project</button>
+            
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectNamesTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Sub Budget Names Section -->
+            <h2>💼 Sub Project Names (for Budget)</h2>
+            <button onclick="openSubProjectModal()">➕ Add Sub Project</button>
+            
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Sub Project Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subProjectNamesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="orderModalTitle">Add New Order</h2>
+                <span class="close" onclick="closeOrderModal()">&times;</span>
+            </div>
+            <form onsubmit="saveOrder(event)">
+                <div class="form-group">
+                    <label>Order Date</label>
+                    <input type="date" id="orderDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Sub Project</label>
+                    <select id="orderProject" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Vendor</label>
+                    <input type="text" id="orderVendor" required>
+                </div>
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select id="orderCurrency" onchange="updateCurrencyLabel()">
+                        <option value="ILS">ILS (₪)</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cost (<span id="currencyLabel">ILS</span>)</label>
+                    <input type="number" step="0.01" id="orderCost" required oninput="showUSDConversion()">
+                    <small id="usdConversion" style="color: #667eea;"></small>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="orderStatus" required>
+                        <option value="Planned">Planned</option>
+                        <option value="Ordered">Ordered</option>
+                        <option value="PO Sent">PO Sent</option>
+                        <option value="Received">Received</option>
+                    </select>
+                </div>
+                <button type="submit">Save Order</button>
+                <button type="button" class="btn-secondary" onclick="closeOrderModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flight Modal -->
+    <div id="flightModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="flightModalTitle">Add New Flight</h2>
+                <span class="close" onclick="closeFlightModal()">&times;</span>
+            </div>
+            <form onsubmit="saveFlight(event)">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" id="flightStartDate" required>
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" id="flightEndDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Destination</label>
+                    <input type="text" id="flightDestination" required>
+                </div>
+                <div class="form-group">
+                    <label>Travelers</label>
+                    <select id="flightTravelers" required multiple size="8">
+                        <option value="Haim">Haim</option>
+                        <option value="Gal">Gal</option>
+                        <option value="Hadas">Hadas</option>
+                        <option value="Amir">Amir</option>
+                        <option value="Nofar">Nofar</option>
+                        <option value="Shiri">Shiri</option>
+                        <option value="Tom">Tom</option>
+                        <option value="Tal">Tal</option>
+                    </select>
+                    <small>Hold Ctrl/Cmd to select multiple travelers</small>
+                </div>
+                <div class="form-group">
+                    <label>Cost (USD)</label>
+                    <input type="number" step="0.01" id="flightCost">
+                    <small>Leave empty for TBD</small>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="flightStatus" required>
+                        <option value="Planned">Planned</option>
+                        <option value="Ordered">Ordered</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                </div>
+                <button type="submit">Save Flight</button>
+                <button type="button" class="btn-secondary" onclick="closeFlightModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Update Modal -->
+    <div id="taskUpdateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Task Status</h2>
+                <span class="close" onclick="closeTaskUpdateModal()">&times;</span>
+            </div>
+            <form onsubmit="saveTaskUpdate(event)">
+                <div class="form-group">
+                    <label>Status Update</label>
+                    <select id="taskUpdateStatus" required>
+                        <option value="">Select Status</option>
+                        <option value="Done">Done</option>
+                        <option value="Delayed">Delayed</option>
+                        <option value="Ongoing">Ongoing</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Deliverable Link</label>
+                    <input type="text" id="taskUpdateDeliverables" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea id="taskUpdateNotes"></textarea>
+                </div>
+                <button type="submit">Save Update</button>
+                <button type="button" class="btn-secondary" onclick="closeTaskUpdateModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Modal (for Bank) -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="taskModalTitle">Add New Task</h2>
+                <span class="close" onclick="closeTaskModal()">&times;</span>
+            </div>
+            <form onsubmit="saveTask(event)">
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <select id="taskProjectName" required>
+                        <option value="">Select Project...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Owner</label>
+                    <select id="taskOwner" required>
+                        <option value="Tom Assaf">Tom Assaf</option>
+                        <option value="Gal Aviram">Gal Aviram</option>
+                        <option value="Hadas Hoshen">Hadas Hoshen</option>
+                        <option value="Haim">Haim</option>
+                        <option value="Amir">Amir</option>
+                        <option value="Nofar">Nofar</option>
+                        <option value="Shiri">Shiri</option>
+                        <option value="Tal">Tal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Due Date</label>
+                    <input type="date" id="taskDueDate">
+                </div>
+                <div class="form-group">
+                    <label>Task Description</label>
+                    <textarea id="taskDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="taskPriority" required>
+                        <option value="High">High</option>
+                        <option value="Mid-High">Mid-High</option>
+                        <option value="Mid">Mid</option>
+                        <option value="Low-Mid">Low-Mid</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="taskStatus" required>
+                        <option value="Not Assigned">Not Assigned</option>
+                        <option value="Assigned">Assigned</option>
+                        <option value="Done">Done</option>
+                        <option value="Delayed">Delayed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="taskNotes"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Deliverable Links</label>
+                    <input type="text" id="taskDeliverables" placeholder="https://...">
+                </div>
+                <button type="submit">Save Task</button>
+                <button type="button" class="btn-secondary" onclick="closeTaskModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Team Member Modal -->
+    <div id="teamMemberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="teamMemberModalTitle">Add Team Member</h2>
+                <span class="close" onclick="closeTeamMemberModal()">&times;</span>
+            </div>
+            <form onsubmit="saveTeamMember(event)">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="teamMemberName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="teamMemberEmail" required>
+                </div>
+                <button type="submit">Save Team Member</button>
+                <button type="button" class="btn-secondary" onclick="closeTeamMemberModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Project Modal -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="projectModalTitle">Add Project</h2>
+                <span class="close" onclick="closeProjectModal()">&times;</span>
+            </div>
+            <form onsubmit="saveProject(event)">
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" id="projectName" required placeholder="e.g., Jupiter Valve, Aortic X">
+                </div>
+                <button type="submit">Save Project</button>
+                <button type="button" class="btn-secondary" onclick="closeProjectModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sub Project Modal -->
+    <div id="subProjectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="subProjectModalTitle">Add Sub Project</h2>
+                <span class="close" onclick="closeSubProjectModal()">&times;</span>
+            </div>
+            <form onsubmit="saveSubProject(event)">
+                <div class="form-group">
+                    <label>Code</label>
+                    <input type="text" id="subProjectCode" required placeholder="e.g., N01">
+                </div>
+                <div class="form-group">
+                    <label>Sub Project Name</label>
+                    <input type="text" id="subProjectName" required placeholder="e.g., Raw materials -Jupiter">
+                </div>
+                <button type="submit">Save Sub Project</button>
+                <button type="button" class="btn-secondary" onclick="closeSubProjectModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ════════════════════════════════════════════════════════════════
+        //  ⚙️  CONFIG — Edit this section when reusing for a new project
+        // ════════════════════════════════════════════════════════════════
+
+        const APP_TITLE    = "EIIC SSH Project Manager";   // Shows in header
+        const APP_SUBTITLE = "2026 Action Items & Budget Tracker";
+
+        // Default fallback data — shown if Firebase has no data yet
+        // Firebase will override this with live data on load
+
+        let menuTasks = [
+            {id: 1, systemName: 'Jupiter', owner: 'Tom Assaf', dueDate: '', task: 'Design and build a lower SC valve and define Pro-Cons', priority: 'Mid', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 2, systemName: 'Jupiter', owner: 'Tom Assaf', dueDate: '', task: 'Design and build a SC that can collaps in VinV and define Pro-Cons', priority: 'Low-Mid', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 3, systemName: 'Aortic-X: MIS', owner: 'Hadas Hoshen', dueDate: '2026-02-12', task: 'Create Concepts and list uses for IR on Aortic monitoring implant for AT', priority: 'Low', status: 'Assigned', statusUpdate: '', notes: 'I sent to haim for quick evaluetion.', deliverables: ''},
+            {id: 4, systemName: 'Jupiter', owner: 'Tom Assaf', dueDate: '', task: 'Investigate Valve and Valve in Valve failure mode and timeframe', priority: 'Mid-High', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 5, systemName: 'Jupiter', owner: 'Tom Assaf', dueDate: '', task: 'Investigate Sewing technique and effect on Aortic Valve and small SC', priority: 'Low-Mid', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 6, systemName: 'Aortic-X: Valve improvements', owner: 'Hadas Hoshen', dueDate: '2026-03-01', task: 'Order plastic Aortic models for RI', priority: 'High', status: 'Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 7, systemName: 'Jupiter', owner: 'Tom Assaf', dueDate: '2026-02-05', task: 'Define and build of an Expansion test', priority: 'High', status: 'Ongoing', statusUpdate: 'Delayed', notes: 'Behind schedule', deliverables: ''},
+            {id: 8, systemName: 'Jupiter', owner: 'Gal Aviram', dueDate: '2026-02-20', task: 'Finish Apex to annulus testing', priority: 'High', status: 'Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 9, systemName: 'Aortic-X: Valve in Valve', owner: 'Hadas Hoshen', dueDate: '2026-03-15', task: 'Create Valve-in-Valve test protocol', priority: 'Mid', status: 'Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 10, systemName: 'General', owner: 'Tom Assaf', dueDate: '2026-02-28', task: 'Review Q1 test results', priority: 'High', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 11, systemName: 'Jupiter', owner: 'Gal Aviram', dueDate: '', task: 'Material testing for new alloys', priority: 'Mid', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 12, systemName: 'General', owner: 'Hadas Hoshen', dueDate: '2026-04-01', task: 'Prepare regulatory documentation', priority: 'High', status: 'Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 13, systemName: 'Jupiter', owner: 'Tom Assaf', dueDate: '', task: 'Biocompatibility assessment', priority: 'Mid-High', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 14, systemName: 'Aortic-X: Valve improvements', owner: 'Gal Aviram', dueDate: '2026-03-10', task: 'Design fixture for radial force test', priority: 'High', status: 'Assigned', statusUpdate: 'Done', notes: 'Completed ahead of schedule', deliverables: ''},
+            {id: 15, systemName: 'General', owner: 'Tom Assaf', dueDate: '', task: 'Literature review on valve failures', priority: 'Low', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 16, systemName: 'General', owner: 'Hadas Hoshen', dueDate: '2026-02-25', task: 'Schedule RI visit for March', priority: 'High', status: 'Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 17, systemName: 'Aortic-X: MIS', owner: 'Gal Aviram', dueDate: '', task: 'Verify manufacturing tolerances', priority: 'Mid', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 18, systemName: 'General', owner: 'Tom Assaf', dueDate: '2026-03-20', task: 'Create final Q1 report', priority: 'High', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 19, systemName: 'General', owner: 'Hadas Hoshen', dueDate: '', task: 'Coordinate with suppliers', priority: 'Low-Mid', status: 'Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 20, systemName: 'Aortic-X: MIS', owner: 'Gal Aviram', dueDate: '2026-02-18', task: 'Complete CAD updates', priority: 'Mid', status: 'Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 21, systemName: 'General', owner: 'Tom Assaf', dueDate: '', task: 'Risk assessment documentation', priority: 'Mid-High', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 22, systemName: 'General', owner: 'Hadas Hoshen', dueDate: '2026-04-15', task: 'Plan Q2 testing schedule', priority: 'Mid', status: 'Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 23, systemName: 'General', owner: 'Gal Aviram', dueDate: '', task: 'Update project timeline', priority: 'Low', status: 'Not Assigned', statusUpdate: '', notes: '', deliverables: ''},
+            {id: 24, systemName: 'Jupiter', owner: 'Tom Assaf', dueDate: '2026-03-05', task: 'Finalize test setup requirements', priority: 'High', status: 'Assigned', statusUpdate: '', notes: '', deliverables: ''}
+        ];
+
+        let orders = [
+            {id: 1, date: '2026-01-22', project: 'Test setups and Fixtures - Jupiter', vendor: 'Mailya', currency: 'ILS', cost: 725, usd: 223.08, status: 'Received', quarter: 'Q1'},
+            {id: 2, date: '2026-01-22', project: 'supply and miscellaneous and consulters', vendor: 'אולטרה השחזות', currency: 'ILS', cost: 500, usd: 153.85, status: 'PO Sent', quarter: 'Q1'}
+        ];
+
+        let flights = [
+            {id: 1, startDate: '2026-01-24', endDate: '2026-01-26', destination: 'Los Angeles - STS', travelers: 'Haim, Gal, Amir, Shiri', cost: 9000, status: 'Complete'},
+            {id: 2, startDate: '2026-03-15', endDate: '2026-03-18', destination: 'RI prep + residual force test', travelers: 'Amir, Tom', cost: 6000, status: 'Ordered'},
+            {id: 3, startDate: '2026-05-02', endDate: '2026-05-05', destination: 'Seattle - AATS', travelers: 'Haim', cost: 0, status: 'Planned'}
+        ];
+
+        let budgetItems = [
+            {code: 'N01', name: 'Raw materials -Jupiter', q1_aop: 2000, q1_act: 0, q2_aop: 5000, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 7000, total_act: 0},
+            {code: 'N02', name: 'Implant - Jupiter', q1_aop: 2000, q1_act: 0, q2_aop: 5000, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 7000, total_act: 0},
+            {code: 'N03', name: 'DS- Jupiter', q1_aop: 0, q1_act: 0, q2_aop: 5000, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 5000, total_act: 0},
+            {code: 'N04', name: 'Test setups and Fixtures - Jupiter', q1_aop: 3000, q1_act: 223.08, q2_aop: 6000, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 9000, total_act: 223.08},
+            {code: 'N05', name: 'Raw materials -Aortic X', q1_aop: 0, q1_act: 0, q2_aop: 2500, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 2500, total_act: 0},
+            {code: 'N06', name: 'Implant - Aortic X', q1_aop: 0, q1_act: 0, q2_aop: 2500, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 2500, total_act: 0},
+            {code: 'N07', name: 'DS- Aortic X', q1_aop: 0, q1_act: 0, q2_aop: 2000, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 2000, total_act: 0},
+            {code: 'N08', name: 'Test setups and Fixtures - Aortic X', q1_aop: 0, q1_act: 0, q2_aop: 1000, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 1000, total_act: 0},
+            {code: 'N09', name: 'supply and miscellaneous and consulters', q1_aop: 2000, q1_act: 153.85, q2_aop: 2000, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 4000, total_act: 153.85},
+            {code: 'N10', name: 'Animal trails', q1_aop: 0, q1_act: 0, q2_aop: 0, q2_act: 0, q3_aop: 0, q3_act: 0, q4_aop: 0, q4_act: 0, total_aop: 0, total_act: 0}
+        ];
+
+        let teamMembers = [
+            {id: 1, name: 'Tom Assaf', email: 'tom_assaf@edwards.com'},
+            {id: 2, name: 'Gal Aviram', email: 'gal_aviram@edwards.com'},
+            {id: 3, name: 'Hadas Hoshen', email: 'hadas_hoshencohen@edwards.com'},
+            {id: 4, name: 'Haim', email: 'haim_brauon@edwards.com'},
+            {id: 5, name: 'Amir', email: 'amir@edwards.com'},
+            {id: 6, name: 'Nofar', email: 'nofar@edwards.com'},
+            {id: 7, name: 'Shiri', email: 'shiri@edwards.com'},
+            {id: 8, name: 'Tal', email: 'tal@edwards.com'},
+            {id: 9, name: 'Oren Yehuda', email: 'oren_yehuda@edwards.com'}
+        ];
+
+        let projectNames = [
+            'Ideation',
+            'General',
+            'Aortic-X: MIS',
+            'Jupiter',
+            'Aortic-X: Valve improvements',
+            'Aortic-X: Valve in Valve'
+        ];
+
+        // ════════════════════════════════════════════════════════════════
+        //  End of CONFIG section
+        // ════════════════════════════════════════════════════════════════
+
+        // Exchange rates - dynamic from Data tab
+        function getExchangeRates() {
+            return {
+                'ILS': parseFloat(document.getElementById('ilsToUsdRate')?.value) || 3.25,
+                'USD': 1,
+                'EUR': parseFloat(document.getElementById('eurToUsdRate')?.value) || 0.92
+            };
+        }
+
+        // Tab switching
+        function switchTab(tabName, event) {
+            const clickedButton = event ? event.target : document.querySelector(`.tab[onclick*="${tabName}"]`);
+            
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (clickedButton) clickedButton.classList.add('active');
+            
+            const tabContent = document.getElementById(tabName);
+            if (tabContent) tabContent.classList.add('active');
+        }
+
+        // Helper functions
+        function formatCurrency(amount, currency = 'USD') {
+            const symbols = {'USD': '$', 'ILS': '₪', 'EUR': '€'};
+            return `${symbols[currency]}${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+        }
+
+        function convertToUSD(amount, fromCurrency) {
+            const rates = getExchangeRates();
+            return amount / rates[fromCurrency];
+        }
+
+        function getQuarter(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const month = date.getMonth() + 1;
+            if (month <= 3) return 'Q1';
+            if (month <= 6) return 'Q2';
+            if (month <= 9) return 'Q3';
+            return 'Q4';
+        }
+
+        function isOverdue(dueDate) {
+            if (!dueDate) return false;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const due = new Date(dueDate);
+            due.setHours(0, 0, 0, 0);
+            return due < today;
+        }
+
+        // Load Menu Tasks
+        function loadMenuTasks() {
+            //
+            
+            // Populate owner filter
+            const owners = [...new Set(menuTasks.map(t => t.owner))];
+            const ownerFilter = document.getElementById('menuOwnerFilter');
+            const currentOwner = ownerFilter.value;
+            ownerFilter.innerHTML = '<option value="">All Owners</option>' + 
+                owners.map(o => `<option value="${o}" ${o === currentOwner ? 'selected' : ''}>${o}</option>`).join('');
+            
+            filterMenuTasks();
+            updateEmailRecipientDropdown();
+        }
+
+        function filterMenuTasks() {
+            const ownerFilter = document.getElementById('menuOwnerFilter').value;
+            
+            // Filter to show only Assigned and Ongoing tasks
+            const filteredTasks = menuTasks.filter(task => {
+                const matchesOwner = !ownerFilter || task.owner === ownerFilter;
+                const isAssignedOrOngoing = task.status === 'Assigned' || task.status === 'Ongoing';
+                return matchesOwner && isAssignedOrOngoing;
+            });
+            
+            //
+            
+            const tbody = document.getElementById('menuTableBody');
+            tbody.innerHTML = filteredTasks.map(task => {
+                const overdue = isOverdue(task.dueDate);
+                let rowClass = overdue ? 'overdue' : '';
+                if (task.statusUpdate === 'Done') rowClass = 'menu-done';
+                
+                const dueDateDisplay = task.dueDate || 'Not Set';
+                const statusUpdateDisplay = task.statusUpdate || '-';
+                const notesDisplay = task.notes || '-';
+                const deliverablesDisplay = task.deliverables ? `<a href="${task.deliverables}" target="_blank">🔗 Link</a>` : '-';
+                
+                return `
+                    <tr class="${rowClass}">
+                        <td>${task.id}</td>
+                        <td>${task.systemName}</td>
+                        <td>${task.task}</td>
+                        <td>${task.owner}</td>
+                        <td>${dueDateDisplay}${overdue ? ' <span class="flag overdue">OVERDUE</span>' : ''}</td>
+                        <td>${task.priority}</td>
+                        <td><span class="status ${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span></td>
+                        <td><span class="status ${statusUpdateDisplay.toLowerCase()}">${statusUpdateDisplay}</span></td>
+                        <td>${notesDisplay}</td>
+                        <td>${deliverablesDisplay}</td>
+                        <td>
+                            <button class="btn-small btn-flag" onclick="updateTaskStatus(${task.id})">Update</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Task Update Modal Functions
+        let updatingTaskId = null;
+
+        function updateTaskStatus(id) {
+            updatingTaskId = id;
+            const task = menuTasks.find(t => t.id === id);
+            
+            document.getElementById('taskUpdateStatus').value = task.statusUpdate || '';
+            document.getElementById('taskUpdateDeliverables').value = task.deliverables || '';
+            document.getElementById('taskUpdateNotes').value = task.notes || '';
+            document.getElementById('taskUpdateModal').classList.add('active');
+        }
+
+        function closeTaskUpdateModal() {
+            document.getElementById('taskUpdateModal').classList.remove('active');
+            document.querySelector('#taskUpdateModal form').reset();
+            updatingTaskId = null;
+        }
+
+        function saveTaskUpdate(event) {
+            event.preventDefault();
+            
+            const task = menuTasks.find(t => t.id === updatingTaskId);
+            task.statusUpdate = document.getElementById('taskUpdateStatus').value;
+            task.deliverables = document.getElementById('taskUpdateDeliverables').value;
+            const newNotes = document.getElementById('taskUpdateNotes').value;
+            if (newNotes) {
+                task.notes = newNotes;
+            }
+            
+            closeTaskUpdateModal();
+            loadMenuTasks();
+            loadAllTasks();
+            autoSave();
+            alert('Task status updated!');
+        }
+
+        // Edit task cell inline
+        function editTaskCell(cell, field, taskId) {
+            const task = menuTasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            const currentValue = field === 'status' ? task[field] : (cell.textContent.trim() === '-' ? '' : cell.textContent.trim());
+            
+            if (field === 'systemName') {
+                const select = document.createElement('select');
+                select.innerHTML = '<option value="">Select Project...</option>' + 
+                    projectNames.map(name => `<option value="${name}" ${name === task.systemName ? 'selected' : ''}>${name}</option>`).join('');
+                select.onblur = function() {
+                    task.systemName = select.value;
+                    loadAllTasks();
+                    loadMenuTasks();
+                };
+                select.onchange = function() { select.blur(); };
+                cell.textContent = '';
+                cell.appendChild(select);
+                select.focus();
+            } else if (field === 'owner') {
+                const select = document.createElement('select');
+                const owners = ['Tom Assaf', 'Gal Aviram', 'Hadas Hoshen', 'Haim', 'Amir', 'Nofar', 'Shiri', 'Tal'];
+                select.innerHTML = owners.map(o => `<option value="${o}" ${o === currentValue ? 'selected' : ''}>${o}</option>`).join('');
+                select.onblur = function() {
+                    task.owner = select.value;
+                    loadAllTasks();
+                    loadMenuTasks();
+                };
+                select.onchange = function() { select.blur(); };
+                cell.textContent = '';
+                cell.appendChild(select);
+                select.focus();
+            } else if (field === 'priority') {
+                const select = document.createElement('select');
+                const priorities = ['High', 'Mid-High', 'Mid', 'Low-Mid', 'Low'];
+                select.innerHTML = priorities.map(p => `<option value="${p}" ${p === currentValue ? 'selected' : ''}>${p}</option>`).join('');
+                select.onblur = function() {
+                    task.priority = select.value;
+                    loadAllTasks();
+                };
+                select.onchange = function() { select.blur(); };
+                cell.textContent = '';
+                cell.appendChild(select);
+                select.focus();
+            } else if (field === 'status') {
+                const select = document.createElement('select');
+                const statuses = ['Not Assigned', 'Assigned', 'Done', 'Delayed'];
+                select.innerHTML = statuses.map(s => `<option value="${s}" ${s === task.status ? 'selected' : ''}>${s}</option>`).join('');
+                select.onblur = function() {
+                    task.status = select.value;
+                    loadAllTasks();
+                };
+                select.onchange = function() { select.blur(); };
+                cell.textContent = '';
+                cell.appendChild(select);
+                select.focus();
+            } else if (field === 'dueDate') {
+                const input = document.createElement('input');
+                input.type = 'date';
+                input.value = task.dueDate || '';
+                input.onblur = function() {
+                    task.dueDate = input.value;
+                    loadAllTasks();
+                    loadMenuTasks();
+                };
+                input.onkeypress = function(e) {
+                    e.preventDefault();
+                    if (e.key === 'Enter') input.blur();
+                };
+                cell.textContent = '';
+                cell.appendChild(input);
+                input.focus();
+            } else {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentValue;
+                input.style.width = '100%';
+                input.onblur = function() {
+                    task[field] = input.value;
+                    loadAllTasks();
+                    loadMenuTasks();
+                };
+                input.onkeypress = function(e) {
+                    e.preventDefault();
+                    if (e.key === 'Enter') input.blur();
+                };
+                cell.textContent = '';
+                cell.appendChild(input);
+                input.focus();
+                input.select();
+            }
+        }
+
+        // Task Modal Functions
+        let editingTaskId = null;
+
+        function openTaskModal() {
+            editingTaskId = null;
+            document.getElementById('taskModalTitle').textContent = 'Add New Task';
+            updateProjectDropdowns(); // Populate dropdown
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.remove('active');
+            document.querySelector('#taskModal form').reset();
+            editingTaskId = null;
+        }
+
+        function editTaskFull(id) {
+            editingTaskId = id;
+            const task = menuTasks.find(t => t.id === id);
+            
+            document.getElementById('taskModalTitle').textContent = 'Edit Task';
+            updateProjectDropdowns(); // Populate dropdown first
+            document.getElementById('taskProjectName').value = task.systemName || '';
+            document.getElementById('taskOwner').value = task.owner;
+            document.getElementById('taskDueDate').value = task.dueDate || '';
+            document.getElementById('taskDescription').value = task.task;
+            document.getElementById('taskPriority').value = task.priority;
+            document.getElementById('taskStatus').value = task.status;
+            document.getElementById('taskNotes').value = task.notes || '';
+            document.getElementById('taskDeliverables').value = task.deliverables || '';
+            
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        function deleteTask(id) {
+            if (confirm('Delete this task?')) {
+                const index = menuTasks.findIndex(t => t.id === id);
+                if (index > -1) menuTasks.splice(index, 1);
+                loadAllTasks();
+                loadMenuTasks();
+                autoSave();
+                alert('Task deleted!');
+            }
+        }
+
+        function saveTask(event) {
+            event.preventDefault();
+            
+            const taskData = {
+                systemName: document.getElementById('taskProjectName').value,
+                owner: document.getElementById('taskOwner').value,
+                dueDate: document.getElementById('taskDueDate').value,
+                task: document.getElementById('taskDescription').value,
+                priority: document.getElementById('taskPriority').value,
+                status: document.getElementById('taskStatus').value,
+                notes: document.getElementById('taskNotes').value,
+                deliverables: document.getElementById('taskDeliverables').value,
+                statusUpdate: ''
+            };
+            
+            if (editingTaskId) {
+                const task = menuTasks.find(t => t.id === editingTaskId);
+                Object.assign(task, taskData);
+                alert('Task updated!');
+            } else {
+                const newId = Math.max(...menuTasks.map(t => t.id), 0) + 1;
+                menuTasks.push({id: newId, ...taskData});
+                alert('Task added!');
+            }
+            
+            closeTaskModal();
+            loadAllTasks();
+            loadMenuTasks();
+            autoSave();
+        }
+
+        // Load All Tasks
+        function loadAllTasks() {
+            const tbody = document.getElementById('taskTableBody');
+            document.getElementById('taskCount').textContent = menuTasks.length;
+            
+            // Populate owner filter
+            const owners = [...new Set(menuTasks.map(t => t.owner))];
+            const ownerFilter = document.getElementById('taskOwnerFilter');
+            const currentOwner = ownerFilter.value;
+            ownerFilter.innerHTML = '<option value="">All Owners</option>' + 
+                owners.map(o => `<option value="${o}" ${o === currentOwner ? 'selected' : ''}>${o}</option>`).join('');
+            
+            filterTasks();
+        }
+
+        function filterTasks() {
+            const searchTerm = document.getElementById('taskSearch').value.toLowerCase();
+            const ownerFilter = document.getElementById('taskOwnerFilter').value;
+            const statusFilter = document.getElementById('taskStatusFilter').value;
+            
+            const filteredTasks = menuTasks.filter(task => {
+                const matchesSearch = task.task.toLowerCase().includes(searchTerm) || 
+                                    task.owner.toLowerCase().includes(searchTerm);
+                const matchesOwner = !ownerFilter || task.owner === ownerFilter;
+                const matchesStatus = !statusFilter || task.status === statusFilter;
+                
+                return matchesSearch && matchesOwner && matchesStatus;
+            });
+            
+            const tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = filteredTasks.map(task => {
+                const overdue = isOverdue(task.dueDate);
+                let rowClass = '';
+                if (task.status === 'Done') {
+                    rowClass = 'done';
+                } else if (task.statusUpdate === 'Done') {
+                    rowClass = 'menu-done';
+                } else if (overdue) {
+                    rowClass = 'overdue';
+                }
+                
+                const dueDateDisplay = task.dueDate || 'Not Set';
+                const menuStatusDisplay = task.statusUpdate ? `<span class="status ${task.statusUpdate.toLowerCase()}">${task.statusUpdate}</span>` : '-';
+                const deliverablesDisplay = task.deliverables || '-';
+                
+                return `
+                    <tr class="${rowClass}">
+                        <td>${task.id}</td>
+                        <td class="editable-cell" onclick="editTaskCell(this, 'systemName', ${task.id})">${task.systemName}</td>
+                        <td class="editable-cell" onclick="editTaskCell(this, 'owner', ${task.id})">${task.owner}</td>
+                        <td class="editable-cell" onclick="editTaskCell(this, 'dueDate', ${task.id})">${dueDateDisplay}</td>
+                        <td class="editable-cell" onclick="editTaskCell(this, 'task', ${task.id})">${task.task}</td>
+                        <td class="editable-cell" onclick="editTaskCell(this, 'priority', ${task.id})">${task.priority}</td>
+                        <td class="editable-cell" onclick="editTaskCell(this, 'status', ${task.id})"><span class="status ${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span></td>
+                        <td>${menuStatusDisplay}</td>
+                        <td class="editable-cell" onclick="editTaskCell(this, 'notes', ${task.id})">${task.notes || '-'}</td>
+                        <td class="editable-cell" onclick="editTaskCell(this, 'deliverables', ${task.id})">${deliverablesDisplay}</td>
+                        <td>
+                            <button class="btn-small btn-edit" onclick="editTaskFull(${task.id})">Edit</button>
+                            <button class="btn-small btn-danger" onclick="deleteTask(${task.id})">Del</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Load Orders
+        function loadOrders() {
+            // Populate project dropdown
+            const projectNames = [...new Set(budgetItems.map(b => b.name))];
+            const projectSelect = document.getElementById('orderProject');
+            projectSelect.innerHTML = projectNames.map(name => `<option value="${name}">${name}</option>`).join('');
+            
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = orders.map(order => {
+                const displayCost = formatCurrency(order.usd, 'USD');
+                
+                return `
+                    <tr data-id="${order.id}">
+                        <td>${order.date}</td>
+                        <td>${order.project}</td>
+                        <td>${order.vendor}</td>
+                        <td>${displayCost} (${order.cost} ${order.currency})</td>
+                        <td><span class="status ${order.status.toLowerCase().replace(' ', '-')}">${order.status}</span></td>
+                        <td>
+                            <button class="btn-small btn-edit" onclick="editOrder(${order.id})">Edit</button>
+                            <button class="btn-small btn-danger" onclick="deleteOrder(${order.id})">Del</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Order Modal Functions
+        let editingOrderId = null;
+
+        function openOrderModal() {
+            editingOrderId = null;
+            document.getElementById('orderModalTitle').textContent = 'Add New Order';
+            document.getElementById('orderCurrency').value = 'ILS';
+            updateCurrencyLabel();
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.remove('active');
+            document.querySelector('#orderModal form').reset();
+            editingOrderId = null;
+        }
+
+        function updateCurrencyLabel() {
+            const currency = document.getElementById('orderCurrency').value;
+            document.getElementById('currencyLabel').textContent = currency;
+            showUSDConversion();
+        }
+
+        function showUSDConversion() {
+            const cost = parseFloat(document.getElementById('orderCost').value) || 0;
+            const currency = document.getElementById('orderCurrency').value;
+            const conversionDiv = document.getElementById('usdConversion');
+            const rates = getExchangeRates();
+            
+            if (cost > 0 && currency !== 'USD') {
+                const usdAmount = convertToUSD(cost, currency);
+                conversionDiv.textContent = `≈ ${formatCurrency(usdAmount, 'USD')} (Rate: 1 USD = ${rates[currency]} ${currency})`;
+            } else {
+                conversionDiv.textContent = '';
+            }
+        }
+
+        function editOrder(id) {
+            editingOrderId = id;
+            const order = orders.find(o => o.id === id);
+            
+            document.getElementById('orderModalTitle').textContent = 'Edit Order';
+            document.getElementById('orderDate').value = order.date;
+            document.getElementById('orderProject').value = order.project;
+            document.getElementById('orderVendor').value = order.vendor;
+            document.getElementById('orderCurrency').value = order.currency;
+            document.getElementById('orderCost').value = order.cost;
+            document.getElementById('orderStatus').value = order.status;
+            
+            updateCurrencyLabel();
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        function deleteOrder(id) {
+            if (confirm('Delete this order?')) {
+                const index = orders.findIndex(o => o.id === id);
+                if (index > -1) orders.splice(index, 1);
+                loadOrders();
+                recalculateBudget();
+                updateBudgetSummary();
+                autoSave();
+                alert('Order deleted!');
+            }
+        }
+
+        function saveOrder(event) {
+            event.preventDefault();
+            
+            const orderData = {
+                date: document.getElementById('orderDate').value,
+                project: document.getElementById('orderProject').value,
+                vendor: document.getElementById('orderVendor').value,
+                currency: document.getElementById('orderCurrency').value,
+                cost: parseFloat(document.getElementById('orderCost').value),
+                status: document.getElementById('orderStatus').value
+            };
+            
+            orderData.usd = convertToUSD(orderData.cost, orderData.currency);
+            orderData.quarter = getQuarter(orderData.date);
+            
+            if (editingOrderId) {
+                const order = orders.find(o => o.id === editingOrderId);
+                Object.assign(order, orderData);
+                alert('Order updated!');
+            } else {
+                const newId = Math.max(...orders.map(o => o.id), 0) + 1;
+                orders.push({id: newId, ...orderData});
+                alert(`Order added!\nUSD: ${formatCurrency(orderData.usd, 'USD')}`);
+            }
+            
+            closeOrderModal();
+            loadOrders();
+            recalculateBudget();
+            updateBudgetSummary();
+            autoSave();
+        }
+
+        // Load Flights
+        function loadFlights() {
+            const tbody = document.getElementById('flightsTableBody');
+            tbody.innerHTML = flights.map(flight => {
+                const displayCost = flight.cost > 0 ? formatCurrency(flight.cost, 'USD') : 'TBD';
+                const dateRange = `${flight.startDate} to ${flight.endDate}`;
+                
+                return `
+                    <tr data-id="${flight.id}">
+                        <td>${dateRange}</td>
+                        <td>${flight.destination}</td>
+                        <td>${flight.travelers}</td>
+                        <td>${displayCost}</td>
+                        <td><span class="status ${flight.status.toLowerCase()}">${flight.status}</span></td>
+                        <td>
+                            <button class="btn-small btn-edit" onclick="editFlight(${flight.id})">Edit</button>
+                            <button class="btn-small btn-danger" onclick="deleteFlight(${flight.id})">Del</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Flight Modal Functions
+        let editingFlightId = null;
+
+        function openFlightModal() {
+            editingFlightId = null;
+            document.getElementById('flightModalTitle').textContent = 'Add New Flight';
+            document.getElementById('flightModal').classList.add('active');
+        }
+
+        function closeFlightModal() {
+            document.getElementById('flightModal').classList.remove('active');
+            document.querySelector('#flightModal form').reset();
+            editingFlightId = null;
+        }
+
+        function editFlight(id) {
+            editingFlightId = id;
+            const flight = flights.find(f => f.id === id);
+            
+            document.getElementById('flightModalTitle').textContent = 'Edit Flight';
+            document.getElementById('flightStartDate').value = flight.startDate;
+            document.getElementById('flightEndDate').value = flight.endDate;
+            document.getElementById('flightDestination').value = flight.destination;
+            
+            // Select multiple travelers
+            const travelersArray = flight.travelers.split(', ');
+            const select = document.getElementById('flightTravelers');
+            for (let option of select.options) {
+                option.selected = travelersArray.includes(option.value);
+            }
+            
+            document.getElementById('flightCost').value = flight.cost || '';
+            document.getElementById('flightStatus').value = flight.status;
+            
+            document.getElementById('flightModal').classList.add('active');
+        }
+
+        function deleteFlight(id) {
+            if (confirm('Delete this flight?')) {
+                const index = flights.findIndex(f => f.id === id);
+                if (index > -1) flights.splice(index, 1);
+                loadFlights();
+                updateBudgetSummary();
+                autoSave();
+                alert('Flight deleted!');
+            }
+        }
+
+        function saveFlight(event) {
+            event.preventDefault();
+            
+            // Get selected travelers
+            const select = document.getElementById('flightTravelers');
+            const selectedTravelers = Array.from(select.selectedOptions).map(opt => opt.value);
+            
+            const flightData = {
+                startDate: document.getElementById('flightStartDate').value,
+                endDate: document.getElementById('flightEndDate').value,
+                destination: document.getElementById('flightDestination').value,
+                travelers: selectedTravelers.join(', '),
+                cost: parseFloat(document.getElementById('flightCost').value) || 0,
+                status: document.getElementById('flightStatus').value
+            };
+            
+            if (editingFlightId) {
+                const flight = flights.find(f => f.id === editingFlightId);
+                Object.assign(flight, flightData);
+                alert('Flight updated!');
+            } else {
+                const newId = Math.max(...flights.map(f => f.id), 0) + 1;
+                flights.push({id: newId, ...flightData});
+                alert('Flight added!');
+            }
+            
+            closeFlightModal();
+            loadFlights();
+            updateBudgetSummary();
+            autoSave();
+        }
+
+        // Budget Functions
+        function loadBudget() {
+            const tbody = document.getElementById('budgetTableBody');
+            tbody.innerHTML = budgetItems.map(item => {
+                return `
+                    <tr>
+                        <td>${item.code}</td>
+                        <td>${item.name}</td>
+                        <td class="editable-cell" onclick="editCell(this, 'q1_aop', '${item.code}')">${item.q1_aop || 0}</td>
+                        <td>${item.q1_act.toFixed(2)}</td>
+                        <td class="editable-cell" onclick="editCell(this, 'q2_aop', '${item.code}')">${item.q2_aop || 0}</td>
+                        <td>${item.q2_act.toFixed(2)}</td>
+                        <td class="editable-cell" onclick="editCell(this, 'q3_aop', '${item.code}')">${item.q3_aop || 0}</td>
+                        <td>${item.q3_act.toFixed(2)}</td>
+                        <td class="editable-cell" onclick="editCell(this, 'q4_aop', '${item.code}')">${item.q4_aop || 0}</td>
+                        <td>${item.q4_act.toFixed(2)}</td>
+                        <td><strong>${item.total_aop || 0}</strong></td>
+                        <td><strong>${item.total_act.toFixed(2)}</strong></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function editCell(cell, field, code) {
+            const currentValue = cell.textContent;
+            const input = document.createElement('input');
+            input.type = field.includes('aop') || field.includes('act') ? 'number' : 'text';
+            input.value = currentValue;
+            input.style.width = '100%';
+            
+            input.onblur = function() {
+                const newValue = input.value;
+                cell.textContent = newValue;
+                
+                const item = budgetItems.find(b => b.code === code);
+                if (item) {
+                    if (field.includes('aop') || field.includes('act')) {
+                        item[field] = parseFloat(newValue) || 0;
+                    } else {
+                        item[field] = newValue;
+                    }
+                    
+                    // Recalculate totals
+                    if (field.includes('aop')) {
+                        item.total_aop = (item.q1_aop || 0) + (item.q2_aop || 0) + (item.q3_aop || 0) + (item.q4_aop || 0);
+                    }
+                    
+                    loadBudget();
+                    validateBudget();
+                    updateBudgetSummary();
+                    autoSave();
+                }
+            };
+            
+            input.onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur();
+                }
+            };
+            
+            cell.textContent = '';
+            cell.appendChild(input);
+            input.focus();
+            input.select();
+        }
+
+        function recalculateBudget() {
+            // Reset all ACT values
+            budgetItems.forEach(item => {
+                item.q1_act = 0;
+                item.q2_act = 0;
+                item.q3_act = 0;
+                item.q4_act = 0;
+                item.total_act = 0;
+            });
+            
+            // Calculate from orders (only PO Sent and Received)
+            orders.forEach(order => {
+                if (order.status === 'PO Sent' || order.status === 'Received') {
+                    const item = budgetItems.find(b => b.name === order.project);
+                    if (item) {
+                        const quarter = order.quarter;
+                        if (quarter === 'Q1') item.q1_act += order.usd;
+                        else if (quarter === 'Q2') item.q2_act += order.usd;
+                        else if (quarter === 'Q3') item.q3_act += order.usd;
+                        else if (quarter === 'Q4') item.q4_act += order.usd;
+                        
+                        item.total_act = item.q1_act + item.q2_act + item.q3_act + item.q4_act;
+                    }
+                }
+            });
+            
+            loadBudget();
+        }
+
+        function validateBudget() {
+            const totalBudget = parseFloat(document.getElementById('totalBudgetInput').value) || 60000;
+            const flightBudget = parseFloat(document.getElementById('flightBudgetAllocation').value) || 20000;
+            const operationalBudget = totalBudget - flightBudget;
+            
+            const totalAOP = budgetItems.reduce((sum, item) => sum + (item.total_aop || 0), 0);
+            
+            const validationDiv = document.getElementById('budgetValidation');
+            
+            if (Math.abs(totalAOP - operationalBudget) < 0.01) {
+                validationDiv.innerHTML = '<div class="validation-success">✓ Budget is balanced! Total AOP matches Operational Budget.</div>';
+            } else {
+                const difference = totalAOP - operationalBudget;
+                const message = difference > 0 
+                    ? `⚠️ Budget over-allocated by ${formatCurrency(Math.abs(difference), 'USD')}`
+                    : `⚠️ Budget under-allocated by ${formatCurrency(Math.abs(difference), 'USD')}`;
+                validationDiv.innerHTML = `<div class="validation-error">${message}</div>`;
+            }
+        }
+
+        function calculateQuarterlyPredictions() {
+            const predictions = [];
+            const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+            const today = new Date();
+            const currentMonth = today.getMonth() + 1;
+            const currentQuarter = Math.ceil(currentMonth / 3);
+            
+            let carryOver = 0; // Track surplus/deficit from previous quarters
+            
+            quarters.forEach((quarter, index) => {
+                const quarterNum = index + 1;
+                const totalAOP = budgetItems.reduce((sum, item) => sum + (item[`q${quarterNum}_aop`] || 0), 0);
+                const totalACT = budgetItems.reduce((sum, item) => sum + (item[`q${quarterNum}_act`] || 0), 0);
+                
+                let prediction = 'N/A';
+                let predictionClass = '';
+                let remaining = 0;
+                let adjustedBudget = totalAOP + carryOver;
+                
+                if (quarterNum <= currentQuarter) {
+                    // Past or current quarters
+                    const variance = adjustedBudget - totalACT;
+                    remaining = variance;
+                    
+                    if (quarterNum === currentQuarter) {
+                        // Current quarter - calculate progress
+                        const quarterStartMonth = (quarterNum - 1) * 3 + 1;
+                        const quarterStart = new Date(today.getFullYear(), quarterStartMonth - 1, 1);
+                        const quarterEnd = new Date(today.getFullYear(), quarterStartMonth + 2, 0);
+                        const totalDays = (quarterEnd - quarterStart) / (1000 * 60 * 60 * 24);
+                        const daysPassed = (today - quarterStart) / (1000 * 60 * 60 * 24);
+                        const percentPassed = daysPassed / totalDays;
+                        
+                        const expectedSpent = adjustedBudget * percentPassed;
+                        const actualSpent = totalACT;
+                        
+                        const progressVariance = (actualSpent - expectedSpent) / expectedSpent;
+                        
+                        if (Math.abs(progressVariance) <= 0.15) {
+                            prediction = 'On Budget';
+                            predictionClass = 'on-budget';
+                        } else if (progressVariance > 0.15) {
+                            prediction = `Overspending (${(progressVariance * 100).toFixed(0)}%)`;
+                            predictionClass = 'overspending';
+                        } else {
+                            prediction = `Underspending (${(Math.abs(progressVariance) * 100).toFixed(0)}%)`;
+                            predictionClass = 'underspending';
+                        }
+                    } else {
+                        // Past quarters - closed
+                        const percentVariance = adjustedBudget > 0 ? (variance / adjustedBudget) : 0;
+                        if (Math.abs(percentVariance) <= 0.15) {
+                            prediction = 'On Budget';
+                            predictionClass = 'on-budget';
+                        } else if (variance < 0) {
+                            prediction = `Over (${(Math.abs(percentVariance) * 100).toFixed(0)}%)`;
+                            predictionClass = 'overspending';
+                        } else {
+                            prediction = `Under (${(Math.abs(percentVariance) * 100).toFixed(0)}%)`;
+                            predictionClass = 'underspending';
+                        }
+                        
+                        // Carry over surplus or deficit to next quarter
+                        if (quarterNum < currentQuarter) {
+                            carryOver += variance;
+                        }
+                    }
+                } else {
+                    // Future quarters - show adjusted budget
+                    remaining = adjustedBudget;
+                    prediction = 'Planned';
+                    predictionClass = 'future';
+                }
+                
+                predictions.push({
+                    quarter, 
+                    prediction, 
+                    predictionClass, 
+                    remaining,
+                    adjustedBudget,
+                    totalAOP,
+                    totalACT,
+                    carryOver: quarterNum === 1 ? 0 : carryOver
+                });
+            });
+            
+            const container = document.getElementById('quarterlyPredictions');
+            container.innerHTML = predictions.map(p => {
+                const remainingColor = p.remaining >= 0 ? '#28a745' : '#dc3545';
+                const carryOverDisplay = p.carryOver !== 0 ? 
+                    `<div style="font-size: 11px; color: ${p.carryOver > 0 ? '#28a745' : '#dc3545'}; margin-top: 3px;">
+                        Carry-over: ${formatCurrency(p.carryOver, 'USD')}
+                    </div>` : '';
+                
+                return `
+                <div class="quarter-card">
+                    <h4>${p.quarter}</h4>
+                    <div class="prediction ${p.predictionClass}">${p.prediction}</div>
+                    <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                        <div>Budget: ${formatCurrency(p.totalAOP, 'USD')}</div>
+                        ${p.carryOver !== 0 ? `<div>Adjusted: ${formatCurrency(p.adjustedBudget, 'USD')}</div>` : ''}
+                        <div>Spent: ${formatCurrency(p.totalACT, 'USD')}</div>
+                        <div style="font-weight: bold; color: ${remainingColor}; margin-top: 5px;">
+                            Remaining: ${formatCurrency(p.remaining, 'USD')}
+                        </div>
+                        ${carryOverDisplay}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        // Update budget summary with all calculations
+        function updateBudgetSummary() {
+            // Get total budget
+            const totalBudget = parseFloat(document.getElementById('totalBudgetInput').value) || 60000;
+            
+            // Get flight allocation
+            const flightAllocation = parseFloat(document.getElementById('flightBudgetAllocation').value) || 20000;
+            
+            // Calculate operational budget
+            const operationalBudget = totalBudget - flightAllocation;
+            
+            // Calculate spent from POs (only PO Sent and Received)
+            let spentFromPOs = 0;
+            orders.forEach(order => {
+                if (order.status === 'PO Sent' || order.status === 'Received') {
+                    spentFromPOs += order.usd;
+                }
+            });
+            
+            // Calculate spent from flights (only Ordered and Complete)
+            let spentFromFlights = 0;
+            flights.forEach(flight => {
+                if ((flight.status === 'Ordered' || flight.status === 'Complete') && flight.cost > 0) {
+                    spentFromFlights += flight.cost;
+                }
+            });
+            
+            // Calculate subtotal
+            const subtotalSpent = spentFromPOs + spentFromFlights;
+            
+            // Calculate remaining budgets
+            const totalRemaining = totalBudget - subtotalSpent;
+            const operationalRemaining = operationalBudget - spentFromPOs;
+            const flightRemaining = flightAllocation - spentFromFlights;
+            
+            // Update all displays
+            document.getElementById('operationalBudget').textContent = formatCurrency(operationalBudget, 'USD');
+            document.getElementById('operationalBudget2').textContent = formatCurrency(operationalBudget, 'USD');
+            document.getElementById('spentFromPOs').textContent = formatCurrency(spentFromPOs, 'USD');
+            document.getElementById('spentFromFlights').textContent = formatCurrency(spentFromFlights, 'USD');
+            document.getElementById('subtotalSpent').textContent = formatCurrency(subtotalSpent, 'USD');
+            document.getElementById('totalRemaining').textContent = formatCurrency(totalRemaining, 'USD');
+            document.getElementById('operationalRemaining').textContent = formatCurrency(operationalRemaining, 'USD');
+            document.getElementById('flightRemaining').textContent = formatCurrency(flightRemaining, 'USD');
+            
+            validateBudget();
+            calculateQuarterlyPredictions();
+        }
+
+        // Data Tab Functions
+
+        // Team Members
+        function loadTeamMembers() {
+            const tbody = document.getElementById('teamMembersTableBody');
+            tbody.innerHTML = teamMembers.map(member => `
+                <tr>
+                    <td class="editable-cell" onclick="editTeamMemberCell(this, 'name', ${member.id})">${member.name}</td>
+                    <td class="editable-cell" onclick="editTeamMemberCell(this, 'email', ${member.id})">${member.email}</td>
+                    <td>
+                        <button class="btn-small btn-edit" onclick="editTeamMemberFull(${member.id})">Edit</button>
+                        <button class="btn-small btn-danger" onclick="deleteTeamMember(${member.id})">Del</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editTeamMemberCell(cell, field, memberId) {
+            const member = teamMembers.find(m => m.id === memberId);
+            if (!member) return;
+            
+            const currentValue = cell.textContent.trim();
+            const input = document.createElement('input');
+            input.type = field === 'email' ? 'email' : 'text';
+            input.value = currentValue;
+            input.style.width = '100%';
+            
+            input.onblur = function() {
+                member[field] = input.value;
+                loadTeamMembers();
+                updateOwnerDropdowns();
+            };
+            
+            input.onkeypress = function(e) {
+                    e.preventDefault();
+                if (e.key === 'Enter') input.blur();
+            };
+            
+            cell.textContent = '';
+            cell.appendChild(input);
+            input.focus();
+            input.select();
+        }
+
+        let editingTeamMemberId = null;
+
+        function openTeamMemberModal() {
+            editingTeamMemberId = null;
+            document.getElementById('teamMemberModalTitle').textContent = 'Add Team Member';
+            document.getElementById('teamMemberModal').classList.add('active');
+        }
+
+        function closeTeamMemberModal() {
+            document.getElementById('teamMemberModal').classList.remove('active');
+            document.querySelector('#teamMemberModal form').reset();
+            editingTeamMemberId = null;
+        }
+
+        function editTeamMemberFull(id) {
+            editingTeamMemberId = id;
+            const member = teamMembers.find(m => m.id === id);
+            
+            document.getElementById('teamMemberModalTitle').textContent = 'Edit Team Member';
+            document.getElementById('teamMemberName').value = member.name;
+            document.getElementById('teamMemberEmail').value = member.email;
+            
+            document.getElementById('teamMemberModal').classList.add('active');
+        }
+
+        function deleteTeamMember(id) {
+            if (confirm('Delete this team member?')) {
+                const index = teamMembers.findIndex(m => m.id === id);
+                if (index > -1) teamMembers.splice(index, 1);
+                loadTeamMembers();
+                updateOwnerDropdowns();
+                alert('Team member deleted!');
+            }
+        }
+
+        function saveTeamMember(event) {
+            event.preventDefault();
+            
+            const memberData = {
+                name: document.getElementById('teamMemberName').value,
+                email: document.getElementById('teamMemberEmail').value
+            };
+            
+            if (editingTeamMemberId) {
+                const member = teamMembers.find(m => m.id === editingTeamMemberId);
+                Object.assign(member, memberData);
+                alert('Team member updated!');
+            } else {
+                const newId = Math.max(...teamMembers.map(m => m.id), 0) + 1;
+                teamMembers.push({id: newId, ...memberData});
+                alert('Team member added!');
+            }
+            
+            closeTeamMemberModal();
+            loadTeamMembers();
+            updateOwnerDropdowns();
+        }
+
+        function updateOwnerDropdowns() {
+            // Update task owner dropdown
+            const taskOwnerSelect = document.getElementById('taskOwner');
+            if (taskOwnerSelect) {
+                const currentValue = taskOwnerSelect.value;
+                taskOwnerSelect.innerHTML = teamMembers.map(m => 
+                    `<option value="${m.name}" ${m.name === currentValue ? 'selected' : ''}>${m.name}</option>`
+                ).join('');
+            }
+            
+            // Update email recipient dropdown
+            updateEmailRecipientDropdown();
+        }
+
+        function updateEmailRecipientDropdown() {
+            const emailSelect = document.getElementById('emailRecipientSelect');
+            if (emailSelect) {
+                const currentValue = emailSelect.value;
+                
+                // Get team members who have assigned tasks
+                const ownersWithTasks = new Set();
+                menuTasks.filter(t => t.status === 'Assigned' || t.status === 'Ongoing')
+                    .forEach(task => ownersWithTasks.add(task.owner));
+                
+                emailSelect.innerHTML = '<option value="">Select team member...</option>' + 
+                    teamMembers
+                        .filter(m => ownersWithTasks.has(m.name))
+                        .map(m => `<option value="${m.name}" ${m.name === currentValue ? 'selected' : ''}>${m.name}</option>`)
+                        .join('');
+            }
+        }
+
+        // Project Names
+        function loadProjectNames() {
+            const tbody = document.getElementById('projectNamesTableBody');
+            tbody.innerHTML = projectNames.map((name, index) => `
+                <tr>
+                    <td class="editable-cell" onclick="editProjectNameCell(this, ${index})">${name}</td>
+                    <td>
+                        <button class="btn-small btn-edit" onclick="editProjectFull(${index})">Edit</button>
+                        <button class="btn-small btn-danger" onclick="deleteProject(${index})">Del</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editProjectNameCell(cell, index) {
+            const currentValue = cell.textContent.trim();
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue;
+            input.style.width = '100%';
+            
+            input.onblur = function() {
+                const newValue = input.value;
+                const oldValue = projectNames[index];
+                projectNames[index] = newValue;
+                
+                // Update all tasks with this project name
+                menuTasks.forEach(task => {
+                    if (task.systemName === oldValue) {
+                        task.systemName = newValue;
+                    }
+                });
+                
+                loadProjectNames();
+                loadMenuTasks();
+                loadAllTasks();
+                updateProjectDropdowns();
+            };
+            
+            input.onkeypress = function(e) {
+                    e.preventDefault();
+                if (e.key === 'Enter') input.blur();
+            };
+            
+            cell.textContent = '';
+            cell.appendChild(input);
+            input.focus();
+            input.select();
+        }
+
+        let editingProjectId = null;
+
+        function openProjectModal() {
+            editingProjectId = null;
+            document.getElementById('projectModalTitle').textContent = 'Add Project';
+            document.getElementById('projectModal').classList.add('active');
+        }
+
+        function closeProjectModal() {
+            document.getElementById('projectModal').classList.remove('active');
+            document.querySelector('#projectModal form').reset();
+            editingProjectId = null;
+        }
+
+        function editProjectFull(index) {
+            editingProjectId = index;
+            const projectName = projectNames[index];
+            
+            document.getElementById('projectModalTitle').textContent = 'Edit Project';
+            document.getElementById('projectName').value = projectName;
+            
+            document.getElementById('projectModal').classList.add('active');
+        }
+
+        function deleteProject(index) {
+            if (confirm('Delete this project?')) {
+                projectNames.splice(index, 1);
+                loadProjectNames();
+                updateProjectDropdowns();
+                alert('Project deleted!');
+            }
+        }
+
+        function saveProject(event) {
+            event.preventDefault();
+            
+            const projectName = document.getElementById('projectName').value;
+            
+            if (editingProjectId !== null) {
+                const oldName = projectNames[editingProjectId];
+                projectNames[editingProjectId] = projectName;
+                
+                // Update tasks that use this project name
+                menuTasks.forEach(task => {
+                    if (task.systemName === oldName) {
+                        task.systemName = projectName;
+                    }
+                });
+                
+                alert('Project updated!');
+            } else {
+                projectNames.push(projectName);
+                alert('Project added!');
+            }
+            
+            closeProjectModal();
+            loadProjectNames();
+            loadMenuTasks();
+            loadAllTasks();
+            updateProjectDropdowns();
+        }
+
+        function updateProjectDropdowns() {
+            // Update task project dropdown
+            const taskProjectSelect = document.getElementById('taskProjectName');
+            if (taskProjectSelect) {
+                const currentValue = taskProjectSelect.value;
+                taskProjectSelect.innerHTML = '<option value="">Select Project...</option>' + 
+                    projectNames.map(name => 
+                        `<option value="${name}" ${name === currentValue ? 'selected' : ''}>${name}</option>`
+                    ).join('');
+            }
+        }
+
+        // Sub Project Names Management
+        function loadSubProjectNames() {
+            const tbody = document.getElementById('subProjectNamesTableBody');
+            tbody.innerHTML = budgetItems.map((item, index) => `
+                <tr>
+                    <td class="editable-cell" onclick="editSubProjectCell(this, 'code', ${index})">${item.code}</td>
+                    <td class="editable-cell" onclick="editSubProjectCell(this, 'name', ${index})">${item.name}</td>
+                    <td>
+                        <button class="btn-small btn-edit" onclick="editSubProjectFull(${index})">Edit</button>
+                        <button class="btn-small btn-danger" onclick="deleteSubProject(${index})">Del</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editSubProjectCell(cell, field, index) {
+            const currentValue = cell.textContent.trim();
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue;
+            input.style.width = '100%';
+            
+            input.onblur = function() {
+                budgetItems[index][field] = input.value;
+                loadSubProjectNames();
+                loadBudget();
+            };
+            
+            input.onkeypress = function(e) {
+                    e.preventDefault();
+                if (e.key === 'Enter') input.blur();
+            };
+            
+            cell.textContent = '';
+            cell.appendChild(input);
+            input.focus();
+            input.select();
+        }
+
+        let editingSubProjectId = null;
+
+        function openSubProjectModal() {
+            editingSubProjectId = null;
+            document.getElementById('subProjectModalTitle').textContent = 'Add Sub Project';
+            document.getElementById('subProjectModal').classList.add('active');
+        }
+
+        function closeSubProjectModal() {
+            document.getElementById('subProjectModal').classList.remove('active');
+            document.querySelector('#subProjectModal form').reset();
+            editingSubProjectId = null;
+        }
+
+        function editSubProjectFull(index) {
+            editingSubProjectId = index;
+            const item = budgetItems[index];
+            
+            document.getElementById('subProjectModalTitle').textContent = 'Edit Sub Project';
+            document.getElementById('subProjectCode').value = item.code;
+            document.getElementById('subProjectName').value = item.name;
+            
+            document.getElementById('subProjectModal').classList.add('active');
+        }
+
+        function deleteSubProject(index) {
+            if (confirm('Delete this sub project? This will also remove it from the budget.')) {
+                budgetItems.splice(index, 1);
+                loadSubProjectNames();
+                loadBudget();
+                updateBudgetSummary();
+                alert('Sub project deleted!');
+            }
+        }
+
+        function saveSubProject(event) {
+            event.preventDefault();
+            
+            const code = document.getElementById('subProjectCode').value;
+            const name = document.getElementById('subProjectName').value;
+            
+            if (editingSubProjectId !== null) {
+                budgetItems[editingSubProjectId].code = code;
+                budgetItems[editingSubProjectId].name = name;
+                alert('Sub project updated!');
+            } else {
+                const newItem = {
+                    code: code,
+                    name: name,
+                    q1_aop: 0, q1_act: 0,
+                    q2_aop: 0, q2_act: 0,
+                    q3_aop: 0, q3_act: 0,
+                    q4_aop: 0, q4_act: 0,
+                    total_aop: 0, total_act: 0
+                };
+                budgetItems.push(newItem);
+                alert('Sub project added!');
+            }
+            
+            closeSubProjectModal();
+            loadSubProjectNames();
+            loadBudget();
+        }
+
+        // Email Functions
+        function generateEmailBody(tasks, recipientName) {
+            const template = document.getElementById('emailTemplate').value;
+            
+            // Create both HTML table AND plain text version
+            // HTML version for email clients that support it
+            let htmlTable = `
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 800px; border: 2px solid #000000;">
+<tr bgcolor="#667eea">
+<td style="padding: 10px; border: 2px solid #000000; color: #ffffff; font-weight: bold;">Task</td>
+<td style="padding: 10px; border: 2px solid #000000; color: #ffffff; font-weight: bold;">Project</td>
+<td style="padding: 10px; border: 2px solid #000000; color: #ffffff; font-weight: bold;">Due Date</td>
+<td style="padding: 10px; border: 2px solid #000000; color: #ffffff; font-weight: bold;">Priority</td>
+<td style="padding: 10px; border: 2px solid #000000; color: #ffffff; font-weight: bold;">Status</td>
+</tr>`;
+            
+            tasks.forEach((task, index) => {
+                const overdueFlag = isOverdue(task.dueDate) ? ' [OVERDUE]' : '';
+                const bgColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
+                
+                htmlTable += `
+<tr bgcolor="${bgColor}">
+<td style="padding: 8px; border: 1px solid #000000;">${task.task}${overdueFlag}</td>
+<td style="padding: 8px; border: 1px solid #000000;">${task.systemName || '-'}</td>
+<td style="padding: 8px; border: 1px solid #000000;">${task.dueDate || 'Not Set'}</td>
+<td style="padding: 8px; border: 1px solid #000000;">${task.priority}</td>
+<td style="padding: 8px; border: 1px solid #000000;">${task.status}</td>
+</tr>`;
+            });
+            
+            htmlTable += `
+</table>`;
+            
+            // Plain text version with proper formatting
+            let plainTextTable = `
+========================================
+TASK LIST
+========================================
+
+`;
+            
+            tasks.forEach((task, taskIndex) => {
+                const overdueFlag = isOverdue(task.dueDate) ? ' [OVERDUE]' : '';
+                plainTextTable += `
+${taskIndex + 1}. ${task.task}${overdueFlag}
+   Project: ${task.systemName || '-'}
+   Due: ${task.dueDate || 'Not Set'}
+   Priority: ${task.priority}
+   Status: ${task.status}
+   
+----------------------------------------
+`;
+            });
+            
+            // Use HTML table for the template replacement
+            return template
+                .replace('{name}', recipientName)
+                .replace('{tasks}', htmlTable);
+        }
+
+        function sendAllEmails() {
+            const subject = document.getElementById('emailSubject').value;
+            
+            const tasksByOwner = {};
+            menuTasks.filter(t => t.status === 'Assigned' || t.status === 'Ongoing').forEach(task => {
+                if (!tasksByOwner[task.owner]) {
+                    tasksByOwner[task.owner] = [];
+                }
+                tasksByOwner[task.owner].push(task);
+            });
+            
+            let emailLinks = [];
+            
+            Object.keys(tasksByOwner).forEach(ownerName => {
+                const member = teamMembers.find(m => m.name === ownerName);
+                if (member) {
+                    const body = generateEmailBody(tasksByOwner[ownerName], member.name);
+                    const mailto = `mailto:${member.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    emailLinks.push({name: member.name, link: mailto});
+                }
+            });
+            
+            if (emailLinks.length === 0) {
+                alert('No assigned tasks found!');
+                return;
+            }
+            
+            if (emailLinks.length > 0) {
+                window.open(emailLinks[0].link);
+                if (emailLinks.length > 1) {
+                    alert(`Opening email for ${emailLinks[0].name}. \n\nTo send to others, use "Send to One Person" dropdown.`);
+                }
+            }
+        }
+
+        function sendEmailByOwner() {
+            const select = document.getElementById('emailRecipientSelect');
+            const selectedName = select.value;
+            
+            if (!selectedName) {
+                alert('Please select a team member from the dropdown.');
+                return;
+            }
+            
+            const member = teamMembers.find(m => m.name === selectedName);
+            if (!member) {
+                alert('Team member not found!');
+                return;
+            }
+            
+            const tasks = menuTasks.filter(t => 
+                (t.status === 'Assigned' || t.status === 'Ongoing') && t.owner === member.name
+            );
+            
+            if (tasks.length === 0) {
+                alert(`No assigned tasks for ${member.name}!`);
+                return;
+            }
+            
+            const subject = document.getElementById('emailSubject').value;
+            const body = generateEmailBody(tasks, member.name);
+            const mailto = `mailto:${member.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            window.open(mailto);
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        // Firebase Real-Time Sync
+        // This will be overridden by Firebase module once it loads
+        
+        function autoSave() {
+            // Firebase module overrides window.autoSave once connected
+            if (window.firebaseSave) {
+                if (saveTimeout) clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => window.firebaseSave(), 2000);
+            }
+        }
+        
+        function loadDataFromObject(data) {
+            //
+            console.log('📦 Loading data from object:', data);
+            
+            // Handle both 'tasks' (old) and 'menuTasks' (new) field names
+            if (data.menuTasks || data.tasks) {
+                menuTasks = data.menuTasks || data.tasks;
+                //
+                console.log('✅ Loaded', menuTasks.length, 'menu tasks');
+            } else {
+                //
+            }
+            
+            if (data.orders) {
+                orders = data.orders;
+                //
+                console.log('✅ Loaded', orders.length, 'orders');
+            }
+            
+            if (data.flights) {
+                flights = data.flights;
+                //
+                console.log('✅ Loaded', flights.length, 'flights');
+            }
+            
+            if (data.budgetItems) {
+                budgetItems = data.budgetItems;
+                //
+                console.log('✅ Loaded', budgetItems.length, 'budget items');
+            }
+            
+            if (data.teamMembers) {
+                teamMembers = data.teamMembers;
+                //
+                console.log('✅ Loaded', teamMembers.length, 'team members');
+            }
+            
+            if (data.projectNames) {
+                projectNames = data.projectNames;
+                //
+                console.log('✅ Loaded', projectNames.length, 'project names');
+            }
+            
+            // Load configuration - handle both settings and config
+            setTimeout(() => {
+                const config = data.config || data.settings || data;
+                
+                if (config.systemPassword && document.getElementById('systemPassword')) {
+                    document.getElementById('systemPassword').value = config.systemPassword;
+                }
+                if ((config.ilsToUsdRate || config.ilsToUsdRate === 0) && document.getElementById('ilsToUsdRate')) {
+                    document.getElementById('ilsToUsdRate').value = config.ilsToUsdRate;
+                }
+                if ((config.eurToUsdRate || config.eurToUsdRate === 0) && document.getElementById('eurToUsdRate')) {
+                    document.getElementById('eurToUsdRate').value = config.eurToUsdRate;
+                }
+                if (config.totalBudget && document.getElementById('totalBudgetInput')) {
+                    document.getElementById('totalBudgetInput').value = config.totalBudget;
+                }
+                if ((config.flightBudget || config.flightAllocation) && document.getElementById('flightBudgetAllocation')) {
+                    document.getElementById('flightBudgetAllocation').value = config.flightBudget || config.flightAllocation;
+                }
+                if (config.emailSubject && document.getElementById('emailSubject')) {
+                    document.getElementById('emailSubject').value = config.emailSubject;
+                }
+                if (config.emailTemplate && document.getElementById('emailTemplate')) {
+                    document.getElementById('emailTemplate').value = config.emailTemplate;
+                }
+                //
+                console.log('✅ Configuration loaded');
+            }, 100);
+        }
+        
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            initializeProjectNames();
+            loadMenuTasks();
+            loadAllTasks();
+            loadOrders();
+            loadFlights();
+            loadBudget();
+            recalculateBudget();
+            updateBudgetSummary();
+            loadTeamMembers();
+            loadProjectNames();
+            loadSubProjectNames();
+            updateEmailRecipientDropdown();
+        });
+
+        // Initialize on page load - show default data immediately
+        window.addEventListener('DOMContentLoaded', function() {
+            initializeProjectNames();
+            loadMenuTasks();
+            loadAllTasks();
+            loadOrders();
+            loadFlights();
+            loadBudget();
+            recalculateBudget();
+            updateBudgetSummary();
+            loadTeamMembers();
+            loadProjectNames();
+            loadSubProjectNames();
+            updateEmailRecipientDropdown();
+        });
+
+        // autoSave placeholder - Firebase module overrides this
+        let isSaving = false;
+        let saveTimeout = null;
+        function autoSave() {
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => firebaseSave(), 2000);
+        }
+
+        function setStatus(msg, color) {
+            const s = document.getElementById('syncStatus');
+            if (s) { s.textContent = msg; s.style.color = color; }
+        }
+
+        function refreshUI() {
+            loadMenuTasks(); loadAllTasks(); loadOrders(); loadFlights();
+            loadBudget(); recalculateBudget(); updateBudgetSummary();
+            loadTeamMembers(); loadProjectNames(); loadSubProjectNames();
+            updateEmailRecipientDropdown();
+        }
+
+        function applyData(d) {
+            if (d.menuTasks || d.tasks) menuTasks = d.menuTasks || d.tasks;
+            if (d.orders)       orders       = d.orders;
+            if (d.flights)      flights      = d.flights;
+            if (d.budgetItems)  budgetItems  = d.budgetItems;
+            if (d.teamMembers)  teamMembers  = d.teamMembers;
+            if (d.projectNames) projectNames = d.projectNames;
+            const cfg = d.config || d.settings || {};
+            setTimeout(() => {
+                if (cfg.ilsToUsdRate)                         document.getElementById('ilsToUsdRate').value           = cfg.ilsToUsdRate;
+                if (cfg.eurToUsdRate)                         document.getElementById('eurToUsdRate').value           = cfg.eurToUsdRate;
+                if (cfg.totalBudget)                          document.getElementById('totalBudgetInput').value       = cfg.totalBudget;
+                if (cfg.flightBudget || cfg.flightAllocation) document.getElementById('flightBudgetAllocation').value = cfg.flightBudget || cfg.flightAllocation;
+                if (cfg.emailSubject)                         document.getElementById('emailSubject').value           = cfg.emailSubject;
+                if (cfg.emailTemplate)                        document.getElementById('emailTemplate').value          = cfg.emailTemplate;
+                if (cfg.systemPassword)                       document.getElementById('systemPassword').value         = cfg.systemPassword;
+            }, 100);
+        }
+
+        function firebaseSave() {
+            if (!window._fbRef) return;
+            isSaving = true;
+            setStatus('💾 Saving...', '#ffc107');
+            const data = {
+                menuTasks, orders, flights, budgetItems, teamMembers, projectNames,
+                config: {
+                    ilsToUsdRate:   document.getElementById('ilsToUsdRate')?.value           || '3.25',
+                    eurToUsdRate:   document.getElementById('eurToUsdRate')?.value           || '0.92',
+                    totalBudget:    document.getElementById('totalBudgetInput')?.value       || '60000',
+                    flightBudget:   document.getElementById('flightBudgetAllocation')?.value || '20000',
+                    emailSubject:   document.getElementById('emailSubject')?.value           || '',
+                    emailTemplate:  document.getElementById('emailTemplate')?.value          || '',
+                    systemPassword: document.getElementById('systemPassword')?.value         || ''
+                },
+                lastUpdate: new Date().toISOString()
+            };
+            window._fbRef.set(data)
+                .then(() => { setStatus('✅ Saved!', '#28a745'); setTimeout(() => { setStatus('', ''); isSaving = false; }, 2000); })
+                .catch(err => { setStatus('⚠️ ' + err.message, '#dc3545'); isSaving = false; });
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            initializeProjectNames();
+            loadMenuTasks(); loadAllTasks(); loadOrders(); loadFlights();
+            loadBudget(); recalculateBudget(); updateBudgetSummary();
+            loadTeamMembers(); loadProjectNames(); loadSubProjectNames();
+            updateEmailRecipientDropdown();
+        });
+
+    </script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        // ════════════════════════════════════════════════════════════════
+        //  🔥 FIREBASE CONFIG — Replace with your new project credentials
+        //     Get these from: console.firebase.google.com
+        //     Project Settings → Your apps → Firebase SDK snippet
+        // ════════════════════════════════════════════════════════════════
+        firebase.initializeApp({
+            apiKey: "AIzaSyAa4L0D7_sZcakJj59hV1kf804kuBiK750",
+            authDomain: "eiic-ssh-project.firebaseapp.com",
+            databaseURL: "https://eiic-ssh-project-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "eiic-ssh-project",
+            storageBucket: "eiic-ssh-project.firebasestorage.app",
+            messagingSenderId: "863438772787",
+            appId: "1:863438772787:web:efdd025c59bd95ef836146"
+        });
+
+        // ════════════════════════════════════════════════════════════════
+        //  🔑 SECRET PATH — Change this for each new project deployment
+        //     Use something unique, no spaces e.g. "myteam_project2_2027"
+        //     Must match the path used when importing firebase_data.json
+        // ════════════════════════════════════════════════════════════════
+        const SECRET = "eiic_ssh_2026_haim";
+        // ════════════════════════════════════════════════════════════════
+        const _db = firebase.database();
+        window._fbRef = _db.ref('apps/' + SECRET + '/projectData');
+
+        window._fbRef.once('value').then(snap => {
+            if (snap.exists()) {
+                applyData(snap.val());
+                refreshUI();
+                setStatus('✅ Live sync active', '#28a745');
+                setTimeout(() => setStatus('', ''), 3000);
+            } else {
+                setStatus('🔥 Firebase connected - no data yet', '#667eea');
+                setTimeout(() => setStatus('', ''), 3000);
+            }
+
+            let skip = true;
+            window._fbRef.on('value', snap => {
+                if (skip) { skip = false; return; }
+                if (isSaving) return;
+                if (!snap.exists()) return;
+                applyData(snap.val());
+                refreshUI();
+                setStatus('🔄 Updated from team', '#667eea');
+                setTimeout(() => setStatus('', ''), 2000);
+            });
+
+        }).catch(err => setStatus('⚠️ ' + err.message, '#dc3545'));
+    </script>
+</body>
+</html>
